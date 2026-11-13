@@ -2,6 +2,38 @@
 
 Практическая работа по конфигурационному управлению, РТУ МИРЭА, ИКБО-18-25.
 
+Утилита строит граф зависимостей Alpine Linux по метаданным APK
+и открывает диаграмму в браузере. Пять этапов отмечены тегами Git
+`stage-1` … `stage-5`.
+
+## Запуск финальной версии
+
+Нужны Python 3.11+, PlantUML, Java и Graphviz (`dot`). На Windows
+команды можно выполнять в WSL. Если вместо команды `plantuml`
+используется JAR, задайте абсолютный путь к нему.
+
+```sh
+# Вариант для запуска через JAR
+export PLANTUML_JAR=/полный/путь/к/plantuml.jar
+./run.sh --config examples/test.toml
+
+# Проверка программы
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+```
+
+На компьютере с установленной командой `plantuml` достаточно
+выполнить `./run.sh --config examples/test.toml`.
+
+Для показа отдельных этапов используйте команды из соответствующих
+разделов после переключения на нужный тег.
+
+```sh
+git log --oneline --decorate --reverse
+git switch --detach stage-1
+./run.sh --config examples/test.toml
+git switch main
+```
+
 ## Этап 1. Конфигурация
 
 Для запуска нужен Python 3.11+. Компиляция и пакеты Python не требуются.
@@ -84,3 +116,59 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 | D с фильтром B | C | C, A |
 | A в графе с циклом | C | C, B |
 | A в обычном графе | нет | нет |
+
+## Этап 5. Визуализация PlantUML
+
+```sh
+./run.sh --config examples/alpine.toml
+./run.sh --config examples/xz.toml
+./run.sh --config examples/grep.toml
+```
+
+Утилита формирует `out/<пакет>.puml`, рендерит SVG и открывает
+изображение в браузере. Стрелки идут от пакета к его зависимостям.
+Голубым выделяется целевой пакет. В режиме `--no-open` программа
+сохраняет оба файла без открытия браузера. В WSL сохранённые SVG
+можно открыть через Проводник командой `explorer.exe out`.
+
+### Сравнение с Alpine APK
+
+Проверка выполнена через `apk dot` версии 2.14.13 по тому же индексу
+Alpine v3.22, main, x86_64. Если в Alpine настроен этот репозиторий,
+его вывод можно получить следующими командами.
+
+```sh
+apk dot zlib
+apk dot xz
+apk dot grep
+```
+
+| Пакет | Вершины PlantUML | Рёбра PlantUML | Рёбра apk dot | Связи |
+| --- | ---: | ---: | ---: | --- |
+| zlib | 2 | 1 | 1 | zlib → musl |
+| xz | 3 | 3 | 3 | xz → musl, xz → xz-libs, xz-libs → musl |
+| grep | 3 | 3 | 3 | grep → musl, grep → pcre2, pcre2 → musl |
+
+После исключения версий из подписей DOT наборы рёбер совпали для всех
+трёх пакетов. В выводе APK вершины подписаны именами с версиями,
+а виртуальные зависимости указаны на рёбрах. Например, у ребра
+`xz → xz-libs` есть подпись `so:liblzma.so.5`. PlantUML показывает
+имена пакетов и объединяет повторные связи между одной парой вершин.
+На индексах с несколькими поставщиками или ограничениями версий
+полученный граф может отличаться от результата APK.
+
+## Публикация
+
+Создайте пустой публичный репозиторий и выполните в папке `variant14`:
+
+```sh
+git remote add origin <URL-публичного-репозитория>
+git push -u origin main
+git push origin --tags
+```
+
+## Источники
+
+- [Alpine v3.22 · APKINDEX](https://dl-cdn.alpinelinux.org/alpine/v3.22/main/x86_64/)
+- [Руководство apk dot](https://man.archlinux.org/man/apk-dot.8.en)
+- [Установка PlantUML](https://plantuml.com/en/faq-install)
