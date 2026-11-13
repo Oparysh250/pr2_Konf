@@ -11,7 +11,7 @@ from config import load_config
 class ConfigTests(unittest.TestCase):
     """Тесты для проверки конфигурации."""
 
-    def setUp(self): # noqa: N802
+    def set_up(self):
         """Подготовка временного окружения перед каждым тестом."""
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
@@ -19,6 +19,8 @@ class ConfigTests(unittest.TestCase):
         self.path.with_name("graph.toml").write_text("A = []\n")
         self.data = dict(package="A", repository="graph.toml",
                          test_mode=True, filter="")
+
+    setUp = set_up
 
     def load(self, **changes):
         """Записать TOML с изменёнными полями."""
@@ -29,6 +31,7 @@ class ConfigTests(unittest.TestCase):
         return load_config(self.path)
 
     def test_valid_configuration(self):
+        """Тест корректной конфигурации."""
         config = self.load()
         self.assertEqual(config.package, "A")
         self.assertEqual(config.repository,
@@ -37,6 +40,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.filter, "")
 
     def test_invalid_fields(self):
+        """Тест неверных полей."""
         for name, value in [("package", "a"), ("repository", "missing"),
                             ("test_mode", "true"), ("filter", 1)]:
             with self.subTest(name=name):
@@ -44,15 +48,18 @@ class ConfigTests(unittest.TestCase):
                     self.load(**{name: value})
 
     def test_invalid_url(self):
+        """Тест неверного URL."""
         with self.assertRaisesRegex(ValueError, "repository"):
             self.load(package="zlib", test_mode=False, repository="ftp://a")
 
     def test_invalid_syntax(self):
+        """Тест синтаксической ошибки TOML."""
         self.path.write_text("package = [")
         with self.assertRaises(ValueError):
             load_config(self.path)
 
     def test_missing_key(self):
+        """Тест отсутствующего ключа."""
         self.data.pop("filter")
         with self.assertRaisesRegex(ValueError, "filter"):
             self.load()
