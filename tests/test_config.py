@@ -20,7 +20,6 @@ class ConfigTests(unittest.TestCase):
         self.data = dict(package="A", repository="graph.toml",
                          test_mode=True, filter="")
 
-    setUp = set_up
 
     def load(self, **changes):
         """Записать TOML с изменёнными полями."""
