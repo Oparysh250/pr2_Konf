@@ -9,7 +9,10 @@ from config import load_config
 
 
 class ConfigTests(unittest.TestCase):
+    """Тесты для проверки конфигурации."""
+
     def set_up(self):
+        """Подготовка временного окружения перед каждым тестом."""
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.path = Path(directory.name) / "config.toml"
@@ -17,7 +20,6 @@ class ConfigTests(unittest.TestCase):
         self.data = dict(package="A", repository="graph.toml",
                          test_mode=True, filter="")
 
-    # Ссылка для unittest, чтобы он вызывал метод перед каждым тестом
     setUp = set_up
 
     def load(self, **changes):
