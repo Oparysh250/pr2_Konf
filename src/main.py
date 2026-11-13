@@ -3,15 +3,19 @@
 import argparse
 import sys
 
+from apk_index import package_record, read_packages
 from config import load_config
 
 
 def run(config):
-    """Напечатать все параметры прототипа в формате ключ=значение."""
-    print(f"package={config.package}")
-    print(f"repository={config.repository}")
-    print(f"test_mode={str(config.test_mode).lower()}")
-    print(f"filter={config.filter}")
+    """Вывести прямые зависимости как они записаны в метаданных."""
+    if config.test_mode:
+        raise ValueError("На этапе 2 требуется URL индекса Alpine")
+    record = package_record(read_packages(config.repository), config.package)
+    print(f"Прямые зависимости {config.package}:")
+    print("\n".join(record.dependencies) or "нет")
+    if record.conflicts:
+        print("Конфликты: " + ", ".join(record.conflicts))
 
 
 def main():
