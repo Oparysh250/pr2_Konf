@@ -3,19 +3,16 @@
 import argparse
 import sys
 
-from apk_index import package_record, read_packages
 from config import load_config
+from graph import breadth_first, load_adjacency
 
 
 def run(config):
-    """Вывести прямые зависимости как они записаны в метаданных."""
-    if config.test_mode:
-        raise ValueError("На этапе 2 требуется URL индекса Alpine")
-    record = package_record(read_packages(config.repository), config.package)
-    print(f"Прямые зависимости {config.package}:")
-    print("\n".join(record.dependencies) or "нет")
-    if record.conflicts:
-        print("Конфликты: " + ", ".join(record.conflicts))
+    """Вывести список смежности в порядке BFS."""
+    graph = breadth_first(config.package, load_adjacency(config),
+                          config.filter)
+    for name, dependencies in graph.items():
+        print(f"{name}: " + (", ".join(dependencies) or "—"))
 
 
 def main():
