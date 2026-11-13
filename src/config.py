@@ -89,7 +89,7 @@ def load_config(path):
     data = read_toml(path)
     validate_keys(data)
     
-    # Сложная логика проверок вынесена в отдельную функцию
+
     test_mode, package, substring = _validate_types_and_package(data)
     
     repository = repository_location(data["repository"], test_mode, path)
