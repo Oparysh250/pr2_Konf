@@ -89,9 +89,7 @@ def load_config(path):
     data = read_toml(path)
     validate_keys(data)
     
-
     test_mode, package, substring = _validate_types_and_package(data)
-    
     repository = repository_location(data["repository"], test_mode, path)
     
     return Config(package, repository, test_mode, substring)
