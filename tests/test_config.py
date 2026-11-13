@@ -11,7 +11,7 @@ from config import load_config
 class ConfigTests(unittest.TestCase):
     """Тесты для проверки конфигурации."""
 
-    def set_up(self):
+    def setUp(self): # noqa: N802
         """Подготовка временного окружения перед каждым тестом."""
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
@@ -19,8 +19,6 @@ class ConfigTests(unittest.TestCase):
         self.path.with_name("graph.toml").write_text("A = []\n")
         self.data = dict(package="A", repository="graph.toml",
                          test_mode=True, filter="")
-
-    setUp = set_up
 
     def load(self, **changes):
         """Записать TOML с изменёнными полями."""
