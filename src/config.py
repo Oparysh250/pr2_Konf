@@ -35,8 +35,10 @@ def validate_keys(data):
     """Убедиться, что присутствуют ровно четыре нужных ключа."""
     if not isinstance(data, dict):
         raise ValueError("Конфигурация должна быть словарём TOML")
+    
     missing = KEYS - data.keys()
     extra = data.keys() - KEYS
+    
     if missing:
         raise ValueError("Отсутствуют ключи: " + ", ".join(sorted(missing)))
     if extra:
@@ -44,25 +46,36 @@ def validate_keys(data):
         raise ValueError(f"Неизвестные ключи: {names}")
 
 
+def _get_test_path(value, config_path):
+    """Проверить и вернуть путь для тестового режима."""
+    path = config_path.parent / value
+    if not path.is_file():
+        raise ValueError(f"repository: файл не найден: {path}")
+    return str(path)
+
+
+def _validate_url(value):
+    """Проверить корректность URL."""
+    try:
+        url = urlsplit(value)
+        valid = url.scheme in {"http", "https"} and url.hostname
+    except ValueError:
+        valid = False
+    
+    if not valid or re.search(r"\s", value):
+        raise ValueError("repository: требуется корректный HTTP(S) URL")
+    return value
+
+
 def repository_location(value, test_mode, config_path):
     """Вернуть путь к тестовому файлу либо корректный HTTP(S) URL."""
     if not isinstance(value, str) or not value.strip():
         raise ValueError("repository: укажите непустую строку")
+    
     if test_mode:
-        path = config_path.parent / value
-        if not path.is_file():
-            raise ValueError(f"repository: файл не найден: {path}")
-        return str(path)
-    try:
-        url = urlsplit(value)
-        valid = url.scheme in {"http", "https"} and url.hostname and (
-            url.port is None or url.port
-        )
-    except ValueError:
-        valid = False
-    if not valid or re.search(r"\s", value):
-        raise ValueError("repository: требуется корректный HTTP(S) URL")
-    return value
+        return _get_test_path(value, config_path)
+    
+    return _validate_url(value)
 
 
 def _validate_types_and_package(data):
@@ -83,18 +96,18 @@ def _validate_types_and_package(data):
     return test_mode, package, substring
 
 
-def _check_and_validate(data):
-    """Внутренняя проверка конфигурации."""
+def _read_and_check(path):
+    """Прочитать файл и проверить ключи."""
+    data = read_toml(Path(path))
+    if not isinstance(data, dict):
+        raise ValueError("Конфигурация должна быть словарём TOML")
     validate_keys(data)
-    return _validate_types_and_package(data)
+    return data
 
 
 def load_config(path):
-    """Проверить типы, имя пакета и местоположение репозитория."""
-    path = Path(path)
-    data = read_toml(path)
-    
-    test_mode, package, substring = _check_and_validate(data)
+    """Проверить конфигурацию и вернуть объект Config."""
+    data = _read_and_check(path)
+    test_mode, package, substring = _validate_types_and_package(data)
     repository = repository_location(data["repository"], test_mode, path)
-    
     return Config(package, repository, test_mode, substring)
