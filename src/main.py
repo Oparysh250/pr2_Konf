@@ -4,15 +4,18 @@ import argparse
 import sys
 
 from config import load_config
-from graph import breadth_first, load_adjacency
+from graph import load_adjacency
+from reverse import reverse_dependencies
 
 
 def run(config):
-    """Вывести список смежности в порядке BFS."""
-    graph = breadth_first(config.package, load_adjacency(config),
-                          config.filter)
-    for name, dependencies in graph.items():
-        print(f"{name}: " + (", ".join(dependencies) or "—"))
+    """Показать пакеты, которые зависят от указанного пакета."""
+    direct, all_dependents = reverse_dependencies(
+        config.package, load_adjacency(config), config.filter
+    )
+    print(f"Обратные зависимости {config.package}:")
+    print("Прямые: " + (", ".join(direct) or "нет"))
+    print("Прямые и транзитивные: " + (", ".join(all_dependents) or "нет"))
 
 
 def main():
