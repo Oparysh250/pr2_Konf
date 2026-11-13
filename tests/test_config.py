@@ -11,7 +11,7 @@ from config import load_config
 class ConfigTests(unittest.TestCase):
     """Тесты для проверки конфигурации."""
 
-    def set_up(self):
+    def setup(self):
         """Подготовка временного окружения перед каждым тестом."""
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
