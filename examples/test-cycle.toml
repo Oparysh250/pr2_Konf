@@ -1,0 +1,4 @@
+package = "A"
+repository = "cycle.toml"
+test_mode = true
+filter = ""
