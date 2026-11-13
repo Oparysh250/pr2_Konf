@@ -83,15 +83,18 @@ def _validate_types_and_package(data):
     return test_mode, package, substring
 
 
+def _check_and_validate(data):
+    """Внутренняя проверка конфигурации."""
+    validate_keys(data)
+    return _validate_types_and_package(data)
+
+
 def load_config(path):
     """Проверить типы, имя пакета и местоположение репозитория."""
     path = Path(path)
     data = read_toml(path)
     
-    validate_keys(data)
-    
-    test_mode, package, substring = _validate_types_and_package(data)
-    
+    test_mode, package, substring = _check_and_validate(data)
     repository = repository_location(data["repository"], test_mode, path)
     
     return Config(package, repository, test_mode, substring)
